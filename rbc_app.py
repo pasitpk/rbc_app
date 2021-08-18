@@ -224,8 +224,9 @@ def main():
     </body>
     """
     st.markdown(html_temp, unsafe_allow_html=True)
-
+    
     image_file = st.file_uploader("Upload Image", type=['jpg', 'png', 'jpeg'])
+
     if image_file is not None:        
 
         image = np.asarray(Image.open(image_file))
@@ -240,7 +241,8 @@ def main():
 
         show_statistics(bbox_df)
 
-        
+        if st.button('Clear'):
+            st.markdown('<meta http-equiv="refresh" content="0.1" >', unsafe_allow_html=True)
 
 
 if __name__ == '__main__':
