@@ -151,13 +151,15 @@ def bboxes_to_csv(bboxes, img_name):
     return df[['img_name', 'category_id', 'score', 'x0', 'y0', 'w', 'h']]
    
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, show_spinner=False)
 def load_model():
     provider = PROVIDER if PROVIDER in ort.get_available_providers() else 'CPUExecutionProvider'
     print('using provider "{}"'.format(provider))
     model = ort.InferenceSession(model_path, providers=[provider])
     return model
 
+
+@st.cache(allow_output_mutation=True, suppress_st_warning=True, show_spinner=False)
 def detect_rbc(model, img):
 
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
