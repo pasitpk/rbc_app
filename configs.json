@@ -1,0 +1,56 @@
+{
+    "MODEL": "D:/ai4rbc/fcos_so_512_w_60epochs_seed0_model.onnx",
+    "PROVIDER": "CUDAExecutionProvider",
+    "DYNAMIC_EXPORT": true,
+    "BATCH_SIZE": 4,
+    "WINDOW_SIZE": [
+        512,
+        512
+    ],
+    "OVERLAP": [
+        100,
+        100
+    ],
+    "SCALE": [
+        512,
+        512
+    ],
+    "MEAN": [
+        102.9801,
+        115.9465,
+        122.7717
+    ],
+    "SD": [
+        1,
+        1,
+        1
+    ],
+    "TO_RGB": false,
+    "SIZE_DIVISOR": 32,
+    "LENGTH_LIMIT": [10, 100],
+    "IOU_THRESHOLD": 0.35,
+    "SCORE_THRESHOLD": 0.3,
+    "CLASS_W": [
+        5,
+        1,
+        1
+    ],
+    "EDGE_COLOR": {
+        "1": [
+            255,
+            0,
+            0
+        ],
+        "2": [
+            255,
+            255,
+            0
+        ],
+        "3": [
+            0,
+            0,
+            0
+        ]
+    },
+    "EDGE_THICKNESS": 4
+}
