@@ -34,7 +34,6 @@ EDGE_COLOR = configs['EDGE_COLOR']
 EDGE_THICKNESS = configs['EDGE_THICKNESS']
 
 
-
 def window_image(img, window_size, overlap):
     img_h, img_w, _ = img.shape
     n_rows = 1 - (-(img_h - window_size[0]) // (window_size[0] - overlap[1]))
@@ -126,14 +125,18 @@ def draw_bbox(img, bbox):
     color = EDGE_COLOR[str(bbox['category_id'])]
     thickness = EDGE_THICKNESS
     x0, y0, w, h = bbox['bbox']
-    img = cv2.rectangle(img.copy(), (int(x0), int(y0)), 
+    cv2.rectangle(img, (int(x0), int(y0)), 
                         (int(x0+w), int(y0+h)), color, thickness)
     return img
 
 
 def draw_bboxes(img, bboxes):
-    for bbox in bboxes:
-        img = draw_bbox(img, bbox)
+    img = img.copy()
+    progress_bar = st.progress(0)
+    for i, bbox in enumerate(bboxes):
+        draw_bbox(img, bbox)
+        progress_bar.progress(int((i+1)/len(bboxes) * 100))
+    progress_bar.empty()
     return img    
 
 
@@ -146,6 +149,12 @@ def bboxes_to_csv(bboxes, img_name):
     df['img_name'] = img_name
     return df[['img_name', 'category_id', 'score', 'x0', 'y0', 'w', 'h']]
 
+@st.cache(allow_output_mutation=True)
+def load_model():
+    provider = PROVIDER if PROVIDER in ort.get_available_providers() else 'CPUExecutionProvider'
+    print('using provider "{}"'.format(provider))
+    model = ort.InferenceSession(model_path, providers=[provider])
+    return model
 
 def detect_rbc(model, img):
 
@@ -162,19 +171,26 @@ def detect_rbc(model, img):
     out_cls = []
     total_batch = -(-len(x) // bs)
 
-    for b in range(total_batch):
-        outs = model.run(None, {model.get_inputs()[0].name: x[b*bs:(b+1)*bs]})
-        out_bboxes.append(outs[0])
-        out_cls.append(outs[1])
+    with st.spinner(text="Predicting ..."):
+        progress_bar = st.progress(0)
+        for b in range(total_batch):
+            outs = model.run(None, {model.get_inputs()[0].name: x[b*bs:(b+1)*bs]})
+            out_bboxes.append(outs[0])
+            out_cls.append(outs[1])
+            progress_bar.progress(int((b+1)/total_batch * 100))
     
+    progress_bar.empty()
+
     if DYNAMIC_EXPORT:
         outs = [np.concatenate(out_bboxes), np.concatenate(out_cls)]
     else:
         outs = [np.stack(out_bboxes), np.stack(out_cls)]
 
-    bboxes = onnx_to_bbox(merge_bbox(idx, outs, scales), IOU_THRESHOLD, SCORE_THRESHOLD)
+    with st.spinner(text="Processing ..."):
+        bboxes = onnx_to_bbox(merge_bbox(idx, outs, scales), IOU_THRESHOLD, SCORE_THRESHOLD)
 
-    bbox_img = draw_bboxes(img[..., ::-1], bboxes)
+    with st.spinner(text="Drawing bboxes ..."):
+        bbox_img = draw_bboxes(img[..., ::-1], bboxes)
 
     return bbox_img
 
@@ -193,16 +209,15 @@ def main():
     st.markdown(html_temp, unsafe_allow_html=True)
 
     image_file = st.file_uploader("Upload Image", type=['jpg', 'png', 'jpeg'])
-    if image_file is not None:
+    if image_file is not None:        
         image = np.asarray(Image.open(image_file))
+        result_img= detect_rbc(model, image)
         st.text("Original Image")
         st.image(image)
-        result_img= detect_rbc(model, image)
         st.text("Prediction")
         st.image(result_img)
 
+
 if __name__ == '__main__':
-    provider = PROVIDER if PROVIDER in ort.get_available_providers() else 'CPUExecutionProvider'
-    print('using provider "{}"'.format(provider))
-    model = ort.InferenceSession(model_path, providers=[provider])
+    model = load_model()
     main()
