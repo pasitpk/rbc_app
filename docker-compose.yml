@@ -4,9 +4,7 @@ services:
   ai4pbs:
     build: .
     container_name: ai4pbs
-    command: streamlit run rbc_app.py
+    command: streamlit run --server.port 80 rbc_app.py
     volumes:
-      - .:/
-    ports:
-      - "9898:9898"
+      - .:/app
     network_mode: host
