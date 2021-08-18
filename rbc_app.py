@@ -175,7 +175,7 @@ def detect_rbc(model, img):
     out_cls = []
     total_batch = -(-len(x) // bs)
 
-    with st.spinner(text="Predicting ..."):
+    with st.spinner(text="Processing ..."):
         progress_bar = st.progress(0)
         for b in range(total_batch):
             outs = model.run(None, {model.get_inputs()[0].name: x[b*bs:(b+1)*bs]})
@@ -190,7 +190,7 @@ def detect_rbc(model, img):
     else:
         outs = [np.stack(out_bboxes), np.stack(out_cls)]
 
-    with st.spinner(text="Processing ..."):
+    with st.spinner(text="Post-processing ..."):
         bboxes = onnx_to_bbox(merge_bbox(idx, outs, scales), IOU_THRESHOLD, SCORE_THRESHOLD)
 
     with st.spinner(text="Drawing bboxes ..."):
@@ -201,7 +201,7 @@ def detect_rbc(model, img):
 
 def show_statistics(bbox_df):
 
-    st.text(f'Total cell numbers = {len(bbox_df):,}')
+    st.text(f'Total number of red blood cells = {len(bbox_df):,}')
 
     counts = bbox_df['category_id'].value_counts()
     counts.index = counts.index.astype('str')
@@ -227,15 +227,15 @@ def main():
     """
     st.markdown(html_temp, unsafe_allow_html=True)
     
-    image_file = st.file_uploader("Upload Image (The image resolution must be at least 512 x 512 pixels)", type=['jpg', 'png', 'jpeg'])
+    image_file = st.file_uploader(f"Minimum image size is {WINDOW_SIZE[0]} x {WINDOW_SIZE[1]} pixels)", type=['jpg', 'png', 'jpeg'])
 
     if image_file is not None:        
 
         image = np.asarray(Image.open(image_file))
 
-        if image.shape[0] < 512 or image.shape[1] < 512:
+        if image.shape[0] < WINDOW_SIZE[0] or image.shape[1] < WINDOW_SIZE[1]:
 
-            st.error('The image resolution must be at least 512 x 512 pixels, but got {} x {} pixels'.format(image.shape[0], image.shape[1]))
+            st.error(f'The image resolution must be at least {WINDOW_SIZE[0]} x {WINDOW_SIZE[1]} pixels, but got {image.shape[0]} x {image.shape[1]} pixels')
 
             if st.button('Clear'):
                 st.markdown('<meta http-equiv="refresh" content="0.1" >', unsafe_allow_html=True)
