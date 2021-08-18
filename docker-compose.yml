@@ -1,0 +1,12 @@
+version: "3"
+   
+services:
+  ml-ai4stroke:
+    build: .
+    container_name: ai4pbs
+    command: streamlit run rbc_app.py
+    volumes:
+      - .:/
+    ports:
+      - "9898:9898"
+    network_mode: host
