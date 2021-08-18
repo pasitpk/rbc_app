@@ -27,9 +27,17 @@
     ],
     "TO_RGB": false,
     "SIZE_DIVISOR": 32,
-    "LENGTH_LIMIT": [10, 100],
+    "LENGTH_LIMIT": [
+        10,
+        100
+    ],
     "IOU_THRESHOLD": 0.35,
     "SCORE_THRESHOLD": 0.3,
+    "IDX_NAME": {
+        "1": "schistocyte",
+        "2": "others"
+    },
+    "TARGET_NAME": "schistocyte",
     "CLASS_W": [
         5,
         1,

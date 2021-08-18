@@ -2,7 +2,6 @@ import os
 import json
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import cv2
 import mmcv
 import onnxruntime as ort
@@ -29,6 +28,8 @@ SIZE_DIVISOR = configs['SIZE_DIVISOR']
 LENGTH_LIMIT = configs['LENGTH_LIMIT']
 IOU_THRESHOLD = configs['IOU_THRESHOLD']
 SCORE_THRESHOLD = configs['SCORE_THRESHOLD']
+IDX_NAME = configs['IDX_NAME']
+TARGET_NAME = configs['TARGET_NAME']
 CLASS_W = configs['CLASS_W']
 EDGE_COLOR = configs['EDGE_COLOR']
 EDGE_THICKNESS = configs['EDGE_THICKNESS']
@@ -148,6 +149,7 @@ def bboxes_to_csv(bboxes, img_name):
     df['h'] = df['bbox'].apply(lambda x: x[3])
     df['img_name'] = img_name
     return df[['img_name', 'category_id', 'score', 'x0', 'y0', 'w', 'h']]
+   
 
 @st.cache(allow_output_mutation=True)
 def load_model():
@@ -190,10 +192,25 @@ def detect_rbc(model, img):
         bboxes = onnx_to_bbox(merge_bbox(idx, outs, scales), IOU_THRESHOLD, SCORE_THRESHOLD)
 
     with st.spinner(text="Drawing bboxes ..."):
-        bbox_img = draw_bboxes(img[..., ::-1], bboxes)
+        bbox_img = draw_bboxes(img[..., ::-1], bboxes)     
 
-    return bbox_img
+    return bbox_img, bboxes
 
+
+def show_statistics(bbox_df):
+
+    st.text(f'Total cell numbers = {len(bbox_df):,}')
+
+    counts = bbox_df['category_id'].value_counts()
+    counts.index = counts.index.astype('str')
+    name_count = dict()
+    
+    for idx, name in IDX_NAME.items():
+        name_count[name] = counts.loc[idx] if idx in counts.index else 0  
+        st.text(f'  {name} : {name_count[name]:,}')
+    
+    st.text(f'{int(name_count[TARGET_NAME] / len(bbox_df) * 1000)} {TARGET_NAME} : 1,000 red blood cells')
+    
 
 def main():
 
@@ -210,12 +227,20 @@ def main():
 
     image_file = st.file_uploader("Upload Image", type=['jpg', 'png', 'jpeg'])
     if image_file is not None:        
+
         image = np.asarray(Image.open(image_file))
-        result_img= detect_rbc(model, image)
+        result_img, bboxes= detect_rbc(model, image)
+        bbox_df = bboxes_to_csv(bboxes, image_file.name)
+
         st.text("Original Image")
         st.image(image)
+
         st.text("Prediction")
         st.image(result_img)
+
+        show_statistics(bbox_df)
+
+        
 
 
 if __name__ == '__main__':
