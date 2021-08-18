@@ -227,7 +227,7 @@ def main():
     """
     st.markdown(html_temp, unsafe_allow_html=True)
     
-    image_file = st.file_uploader(f"Minimum image size is {WINDOW_SIZE[0]} x {WINDOW_SIZE[1]} pixels)", type=['jpg', 'png', 'jpeg'])
+    image_file = st.file_uploader(f"Minimum image size is {WINDOW_SIZE[0]} x {WINDOW_SIZE[1]} pixels", type=['jpg', 'png', 'jpeg'])
 
     if image_file is not None:        
 
