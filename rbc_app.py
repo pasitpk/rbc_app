@@ -227,24 +227,34 @@ def main():
     """
     st.markdown(html_temp, unsafe_allow_html=True)
     
-    image_file = st.file_uploader("Upload Image", type=['jpg', 'png', 'jpeg'])
+    image_file = st.file_uploader("Upload Image (The image resolution must be at least 512 x 512 pixels)", type=['jpg', 'png', 'jpeg'])
 
     if image_file is not None:        
 
         image = np.asarray(Image.open(image_file))
-        result_img, bboxes= detect_rbc(model, image)
-        bbox_df = bboxes_to_csv(bboxes, image_file.name)
 
-        st.text("Original Image")
-        st.image(image)
+        if image.shape[0] < 512 or image.shape[1] < 512:
 
-        st.text("Prediction")
-        st.image(result_img)
+            st.error('The image resolution must be at least 512 x 512 pixels, but got {} x {} pixels'.format(image.shape[0], image.shape[1]))
 
-        show_statistics(bbox_df)
+            if st.button('Clear'):
+                st.markdown('<meta http-equiv="refresh" content="0.1" >', unsafe_allow_html=True)
 
-        if st.button('Clear'):
-            st.markdown('<meta http-equiv="refresh" content="0.1" >', unsafe_allow_html=True)
+        else:
+
+            result_img, bboxes= detect_rbc(model, image)
+            bbox_df = bboxes_to_csv(bboxes, image_file.name)
+
+            st.text("Original Image")
+            st.image(image)
+
+            st.text("Prediction")
+            st.image(result_img)
+
+            show_statistics(bbox_df)
+
+            if st.button('Clear'):
+                st.markdown('<meta http-equiv="refresh" content="0.1" >', unsafe_allow_html=True)
 
 
 if __name__ == '__main__':
