@@ -1,7 +1,7 @@
 version: "3"
    
 services:
-  ml-ai4stroke:
+  ai4pbs:
     build: .
     container_name: ai4pbs
     command: streamlit run rbc_app.py
